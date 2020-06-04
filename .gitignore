@@ -3,3 +3,4 @@
 *.ko
 *.ko.*
 *.mod.c
+.vscode
