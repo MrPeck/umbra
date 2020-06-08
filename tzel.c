@@ -11,7 +11,7 @@
 
 static unsigned long * get_syscall_table(void)
 {
-    
+    return NULL;
 }
 
 static int __init init_rootkit(void)
