@@ -1,6 +1,9 @@
 *.o
-*.o.*
 *.ko
+*.o.*
 *.ko.*
-*.mod.c
+*.mod
+*.mod.*
+*.order
+*.symvers
 .vscode
