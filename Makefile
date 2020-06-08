@@ -1,4 +1,4 @@
-obj-m += rootkit.o
+obj-m += tzel.o
 
 KDIR := /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)
