@@ -7,7 +7,6 @@
 #include <linux/dirent.h>
 #include <linux/slab.h>
 #include <linux/version.h>
-#include <asm-generic/unistd.h>
 
 static unsigned long * get_syscall_table(void)
 {
