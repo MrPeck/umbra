@@ -16,7 +16,7 @@ static unsigned long * get_syscall_table(void)
 
 static int __init init_rootkit(void)
 {
-    printk(KERN_INFO "%p\n", get_syscall_table);
+    printk(KERN_INFO "%p\n", get_syscall_table());
 
     return 0;
 }
