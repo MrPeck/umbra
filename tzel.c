@@ -16,7 +16,7 @@ static inline void write_cr0_forced(unsigned long val)
 
 static inline void unprotect_memory(void)
 {
-    write_cr0_forced(read_cr0() & (~X86_CR0_WP));
+    write_cr0_forced(read_cr0() & ~X86_CR0_WP);
 }
 
 static inline void protect_memory(void)
