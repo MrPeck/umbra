@@ -1,18 +1,16 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
-
-#define BUF_LEN 32
+#include <string.h>
 
 int main()
 {
-    char buffer[BUF_LEN];
+    char buffer[] = "Hello, world!\n";
     int fd;
     
-    if ((fd = open("./test_file", O_RDONLY)) != -1)
+    if ((fd = open("./test_file", O_RDWR)) >= 0)
     {
-        read(fd, buffer, BUF_LEN);
-        puts(buffer);
+        write(fd, buffer, strlen(buffer));
         close(fd);
     }
     else
