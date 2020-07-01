@@ -76,6 +76,7 @@ static int __init init_rootkit(void)
 
 static void __exit cleanup_rootkit(void)
 {
+    printk(KERN_INFO "Cleaning up Tzel.\n");
     unhook_all();
 }  
 
