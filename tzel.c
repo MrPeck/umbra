@@ -57,7 +57,7 @@ static void unhook_all(void)
 asmlinkage long sys_open_fake(unsigned int fd)
 {
     long (*orig_open)(unsigned int) = (long (*)(unsigned int))(sys_call_table[__NR_open]);
-    printk(KERN_INFO "HOOKED!!!\n");
+    printk(KERN_ALERT "HOOKED!!!\n");
     
     return orig_open(fd);
 }
