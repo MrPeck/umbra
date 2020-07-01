@@ -63,7 +63,7 @@ asmlinkage long sys_close_fake(unsigned int fd)
 {
     long (*orig_close)(unsigned int) = (long (*)(unsigned int))(sys_call_table[__NR_close]);
 
-    printk(KERN_ALERT "HOOKED!!!\n");
+    printk(KERN_EMERG "HOOKED!!!\n");
     
     return orig_close(fd);
 }
