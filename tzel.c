@@ -1,18 +1,22 @@
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/syscalls.h>
-#include <linux/sched.h>
-#include <linux/dirent.h>
-#include <linux/slab.h>
-#include <linux/version.h>
-#include <linux/kallsyms.h>
-#include <linux/fs.h>
-#include <linux/buffer_head.h>
 #include <asm/paravirt.h>
-#include <asm-generic/unistd.h>
 #include <asm/segment.h>
 #include <asm/uaccess.h>
+#include <asm-generic/unistd.h>
+#include <linux/buffer_head.h>
+#include <linux/dirent.h>
+#include <linux/fcntl.h>
+#include <linux/file.h>
+#include <linux/fs.h>
+#include <linux/init.h>
+#include <linux/kallsyms.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/syscalls.h>
+#include <linux/version.h>
+
+
 
 static unsigned long *sys_call_table;
 static unsigned long orig_sys_call_table[__NR_syscalls] = { 0 };
@@ -63,12 +67,23 @@ static void unhook_all(void)
     protect_memory();
 }
 
+static void write_file(const char *filename, const char *data)
+{
+  int fd;
+
+  fd = ksys_open(filename, O_WRONLY|O_CREAT, 0644);
+  if (fd >= 0) {
+    ksys_write(fd, data, strlen(data));
+    ksys_close(fd);
+  }
+}
+
 asmlinkage int sys_write_hijack(unsigned int fd, const char __user *buf, size_t count) 
 { 
     int (*orig_write)(unsigned int, const char __user *, size_t) = 
         (int (*)(unsigned int, const char __user *, size_t))(sys_call_table[__NR_write]);
 
-    printk(KERN_ALERT "WRITE HIJACKED\n");
+    write_file("/home/ppeck/Desktop/Stuff/Project/example.txt", "Hooked!!!\n");
  
     return (*orig_write)(fd, buf, count);
 }
