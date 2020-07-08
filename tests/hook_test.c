@@ -18,7 +18,7 @@ int main()
     }
     else
     {
-        puts("Hook successful!!!");
+        puts("Couldn't open file.");
     }
 
     return 0;
