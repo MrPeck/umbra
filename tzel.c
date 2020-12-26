@@ -13,7 +13,6 @@
 #include <linux/slab.h>
 #include <linux/syscalls.h>
 #include <linux/version.h>
-#include <sys/types.h>
 
 static unsigned long *sys_call_table;
 static unsigned long orig_sys_call_table[__NR_syscalls] = { 0 };
