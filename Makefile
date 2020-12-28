@@ -1,4 +1,4 @@
-obj-m += tzel.o
+obj-m += umbra.o
 
 KDIR := /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)
