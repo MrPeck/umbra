@@ -15,7 +15,7 @@
 #include <linux/version.h>
 
 static unsigned long *sys_call_table;
-static unsigned long orig_sys_call_table[__NR_syscalls] = { 0 };
+static unsigned long orig_sys_call_table[__NR_syscalls] = { NULL };
 extern unsigned long __force_order;
 
 static inline void write_cr0_forced(unsigned long val)
@@ -37,7 +37,7 @@ static void hook_syscall(unsigned int syscall_num, unsigned long hook)
 {
     printk(KERN_INFO "Hooking...\n");
 
-    printk(KERN_INFO "Original address: %lx\n", sys_call_table[syscall_num]);
+    printk(KERN_INFO "Original address: %lx\n", &sys_call_table[syscall_num]);
     printk(KERN_INFO "Fake address: %lx\n", hook);
 
     unprotect_memory();
@@ -47,7 +47,7 @@ static void hook_syscall(unsigned int syscall_num, unsigned long hook)
 
     protect_memory();
 
-    printk(KERN_INFO "New address: %lx\n", sys_call_table[syscall_num]);
+    printk(KERN_INFO "New address:  %lx\n", sys_call_table[syscall_num]);
 }
 
 static void unhook_all(void)
@@ -69,13 +69,7 @@ asmlinkage int sys_openat_hijack(int dirfd, const char __user *pathname, int fla
     orig = (asmlinkage int (*)(int, const char __user *, int, mode_t))
         (sys_call_table[__NR_openat]);
 
-    const char * orig_file = "test_file";
-    const char * fake_file = "./test_file_fake";
-
-    if (strstr(pathname, orig_file))
-    {
-        return orig(dirfd, fake_file, flags, mode);
-    }    
+    printk(KERN_INFO "HOOKED!!!\n");
  
     return orig(dirfd, pathname, flags, mode);
 }
