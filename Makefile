@@ -1,6 +1,9 @@
 obj-m += umbra.o
 
-KDIR := /lib/modules/$(shell uname -r)/build
+ifeq ($(KDIR),)
+	KDIR := /lib/modules/$(shell uname -r)/build
+endif
+
 PWD := $(shell pwd)
 
 all:
