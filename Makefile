@@ -1,4 +1,5 @@
 obj-m += umbra.o
+ccflags-y += -g -DDEBUG
 
 ifeq ($(KDIR),)
 	KDIR := /lib/modules/$(shell uname -r)/build
