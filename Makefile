@@ -1,9 +1,9 @@
-obj-m += umbra.o
+obj-m := umbra.o
+umbra-objs := hooker.o fake_syscalls.o
+
 ccflags-y += -g -DDEBUG
 
-ifeq ($(KDIR),)
-	KDIR := /lib/modules/$(shell uname -r)/build
-endif
+KDIR ?= /lib/modules/$(shell uname -r)/build
 
 PWD := $(shell pwd)
 

