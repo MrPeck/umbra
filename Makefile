@@ -1,5 +1,5 @@
 obj-m := umbra.o
-umbra-objs := hooker.o fake_syscalls.o
+umbra-y := main.o hooker.o fake_syscalls.o
 
 ccflags-y += -g -DDEBUG
 

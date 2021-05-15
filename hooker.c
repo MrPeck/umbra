@@ -1,5 +1,8 @@
 #include "hooker.h"
 
+sys_call_ptr_t *sys_call_table_original;
+sys_call_ptr_t sys_call_table_copy[NR_syscalls];
+
 static inline void write_cr0_forced(unsigned long val)
 {
     asm volatile("mov %0,%%cr0": "+r" (val), "+m" (__force_order));
@@ -15,7 +18,7 @@ static inline void protect_memory(void)
     write_cr0_forced(read_cr0() | X86_CR0_WP);
 }
 
-static void hook_syscall(unsigned long nr, sys_call_ptr_t faddr)
+void hook_syscall(unsigned long nr, sys_call_ptr_t faddr)
 {
     unprotect_memory();
 
@@ -25,7 +28,7 @@ static void hook_syscall(unsigned long nr, sys_call_ptr_t faddr)
     protect_memory();
 }
 
-static void unhook_all(void)
+void unhook_all(void)
 {
     int i;
 

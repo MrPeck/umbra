@@ -5,10 +5,10 @@
 #include <asm/unistd.h>
 
 extern unsigned long __force_order;
-static sys_call_ptr_t *sys_call_table_original;
-static sys_call_ptr_t sys_call_table_copy[NR_syscalls] = { (sys_call_ptr_t)NULL };
+extern sys_call_ptr_t *sys_call_table_original;
+extern sys_call_ptr_t sys_call_table_copy[NR_syscalls];
 
-static void hook_syscall(unsigned long nr, sys_call_ptr_t faddr);
-static void unhook_all(void);
+void hook_syscall(unsigned long nr, sys_call_ptr_t faddr);
+void unhook_all(void);
 
 #endif
