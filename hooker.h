@@ -4,11 +4,9 @@
 #include <asm/syscall.h>
 #include <asm/unistd.h>
 
-extern unsigned long __force_order;
-extern sys_call_ptr_t *sys_call_table_original;
-extern sys_call_ptr_t sys_call_table_copy[NR_syscalls];
-
+void set_sys_call_table_addr(sys_call_ptr_t *sys_call_table);
 void hook_syscall(unsigned long nr, sys_call_ptr_t faddr);
 void unhook_all(void);
+long call_original_syscall(unsigned long nr, const struct pt_regs *regs);
 
 #endif

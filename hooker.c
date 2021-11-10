@@ -1,7 +1,8 @@
 #include "hooker.h"
 
 sys_call_ptr_t *sys_call_table_original;
-sys_call_ptr_t sys_call_table_copy[NR_syscalls];
+sys_call_ptr_t sys_call_table_copy[NR_syscalls] = { (sys_call_ptr_t)NULL };
+extern unsigned long __force_order;
 
 static inline void write_cr0_forced(unsigned long val)
 {
@@ -16,6 +17,11 @@ static inline void unprotect_memory(void)
 static inline void protect_memory(void)
 {
     write_cr0_forced(read_cr0() | X86_CR0_WP);
+}
+
+void set_sys_call_table_addr(sys_call_ptr_t *sys_call_table)
+{
+    sys_call_table_original = sys_call_table;
 }
 
 void hook_syscall(unsigned long nr, sys_call_ptr_t faddr)
@@ -39,4 +45,9 @@ void unhook_all(void)
             sys_call_table_original[i] = sys_call_table_copy[i];
 
     protect_memory();
+}
+
+long call_original_syscall(unsigned long nr, const struct pt_regs *regs)
+{
+    return sys_call_table_copy[nr](regs);
 }
