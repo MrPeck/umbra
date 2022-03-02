@@ -7,7 +7,7 @@
 *.mod.*
 *.order
 *.symvers
-.vscode
+.vscode/
 
 # Builds
 buildroot*
