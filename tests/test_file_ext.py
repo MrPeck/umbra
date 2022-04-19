@@ -1,15 +1,15 @@
 #!/usr/bin/python
 
 import socket
-import struct			
+import struct
 
-PORT = 1337			
+PORT = 1337
 FILE_PATH = b'/home/ppeck/Desktop/Stuff/Cyber/Projects/rootkit/test'
 req = struct.pack('<H', 0) + struct.pack('<H', len(FILE_PATH)) + FILE_PATH
 
 server_sock = socket.socket()
 server_sock.bind(('', PORT))
-server_sock.listen(1)	
+server_sock.listen(1)
 client_sock, client_address = server_sock.accept()
 
 client_sock.send(req)
@@ -36,4 +36,3 @@ elif err == 3:
 
 server_sock.close()
 client_sock.close()
-
