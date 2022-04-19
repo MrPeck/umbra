@@ -7,8 +7,7 @@
 *.mod.*
 *.order
 *.symvers
-.vscode/
+agent
 
-# Builds
-buildroot*
-linux*
+# Others
+.vscode/
