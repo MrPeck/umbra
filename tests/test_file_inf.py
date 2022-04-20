@@ -9,6 +9,7 @@ CONTENT = b'Hello, World!\0'
 
 req = struct.pack('<B', 1) + struct.pack('<I',
                                          len(FILE_PATH) + len(CONTENT) + 5 + 5)
+req += struct.pack('<H', 0o644)
 req += struct.pack('<B', len(FILE_PATH)) + struct.pack('<I', len(CONTENT))
 req += FILE_PATH + CONTENT
 

@@ -11,7 +11,7 @@
 #include <stdbool.h>
 
 #include "c2_prot.h"
-#include "actions.h"
+#include "commands.h"
 
 #define CNC_PORT 1337
 #define CNC_ADDR "127.0.0.1"
