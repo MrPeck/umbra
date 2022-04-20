@@ -1,4 +1,4 @@
-obj-m := umbra.o
+obj-m := nyx.o
 umbra-y := main.o hooker.o fake_syscalls.o module_hiding.o process_hiding.o
 
 ccflags-y += -g -DDEBUG
