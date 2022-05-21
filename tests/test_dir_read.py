@@ -4,10 +4,10 @@ import socket
 import struct
 
 PORT = 1337
-FILE_PATH = b'/home/ppeck/Desktop/Stuff/Cyber/Projects/rootkit/test\0'
+DIR_PATH = b'/home/ppeck/Desktop/Stuff/Cyber/Projects/rootkit\0'
 
-req = struct.pack('<Q', len(FILE_PATH) + 9 + 2) + struct.pack('<B', 0)
-req += struct.pack('<H', len(FILE_PATH)) + FILE_PATH
+req = struct.pack('<Q', len(DIR_PATH) + 9 + 2) + struct.pack('<B', 2)
+req += struct.pack('<H', len(DIR_PATH)) + DIR_PATH
 
 server_sock = socket.socket()
 server_sock.bind(('', PORT))
@@ -24,16 +24,21 @@ client_sock.recv(1)
 err = struct.unpack('<B', client_sock.recv(1))[0]
 print('Response error code: ' + str(err))
 
-data_len = struct.unpack('<Q', client_sock.recv(8))[0]
-print('File size: ' + str(data_len))
-
-file_path = FILE_PATH.decode()
+dir_path = DIR_PATH.decode()
 
 if err == 0:
-    print(file_path + ' was retrieved successfully!')
-    data = client_sock.recv(data_len)
-    print('File Data:')
-    print(data)
+    print(dir_path)
+    while (True):
+        filename_len = struct.unpack('<Q', client_sock.recv(8))[0]
+
+        if filename_len == 0:
+            break
+
+        data = client_sock.recv(filename_len)
+
+        print(data.decode())
 
 server_sock.close()
 client_sock.close()
+
+

