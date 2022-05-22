@@ -3,8 +3,6 @@ nyx-y := main.o hooker.o fake_syscalls.o module_hiding.o process_hiding.o
 
 ccflags-y += -g -DDEBUG
 
-KDIR ?= /lib/modules/$(shell uname -r)/build
-
 PWD := $(shell pwd)
 
 all:

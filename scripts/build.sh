@@ -1,18 +1,14 @@
 #!/bin/sh
 
-REPO=$(realpath $PWD/..)
-BUILD=$(realpath $REPO/..)
+REPO=$(realpath $(dirname $(realpath $0))/..)
+BUILD=$(realpath $(dirname $(realpath $0))/../..)
 
-./clean.sh
+$REPO/scripts/clean.sh
 
-cd $REPO/nyx
-make KDIR=$BUILD/linux
+make -C $REPO KDIR=$BUILD/linux
+
 cp $REPO/nyx/nyx.ko $BUILD/initramfs/home
-
-cd $REPO/hermes
-make
 cp $REPO/hermes/agent $BUILD/initramfs/home
 
-cd $BUILD/initramfs
-find . -print0 | cpio --null -o --format=newc | gzip -9 > $BUILD/initramfs.cpio.gz
+find $BUILD/initramfs -print0 | cpio --null -o --format=newc | gzip -9 > $BUILD/initramfs.cpio.gz
 

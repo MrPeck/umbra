@@ -1,7 +1,6 @@
 #!/bin/sh
 
-REPO=$(realpath $PWD/..)
-BUILD=$(realpath $REPO/..)
+BUILD=$(realpath $(dirname $(realpath $0))/../..)
 
 qemu-system-x86_64 \
 	-kernel $BUILD/linux/arch/x86_64/boot/bzImage \
