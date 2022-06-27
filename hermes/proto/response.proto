@@ -1,0 +1,35 @@
+syntax = "proto2";
+
+message ResponseHeader {
+    enum ResponseType {
+        SUICIDE = 0;
+        EXF_FILE = 1;
+        INF_FILE = 2;
+        READ_DIR = 3;
+    }
+    required ResponseType type = 1;
+}
+
+message ExfiltrationResponse {
+    required ResponseHeader header = 1;
+    required uint32 response = 2;
+    required bytes content = 3;
+}
+
+message InfiltrationResponse {
+    required ResponseHeader header = 1;
+    required uint32 status = 2;
+}
+
+message ReadDirResponse {
+    required ResponseHeader header = 1;
+    required uint32 status = 2;
+
+    message DirEntry {
+        required uint32 inode = 1;
+        required uint32 file_type = 2;
+        required string pathname = 3;
+    }
+
+    repeated DirEntry entries = 3;
+}

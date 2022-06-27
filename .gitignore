@@ -9,5 +9,8 @@
 *.symvers
 agent
 
+# Protobuf generated files
+*.pb-c.*
+
 # Others
 .vscode/
