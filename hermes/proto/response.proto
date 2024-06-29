@@ -1,35 +1,34 @@
 syntax = "proto2";
 
-message ResponseHeader {
-    enum ResponseType {
-        SUICIDE = 0;
-        EXF_FILE = 1;
-        INF_FILE = 2;
-        READ_DIR = 3;
-    }
-    required ResponseType type = 1;
+enum Status {
+  GOOD = 0;
+  OPEN_ERROR = 1;
+  READ_ERROR = 2;
+  WRITE_ERROR = 3;
+  STAT_ERROR = 4;
+  NOT_FILE = 5;
+  NOT_DIRECTORY = 6;
+};
+
+message responseHeader {
+  required Status status = 1;
+  required uint64 size = 2;
 }
 
 message ExfiltrationResponse {
-    required ResponseHeader header = 1;
-    required uint32 response = 2;
-    required bytes content = 3;
+  required responseHeader header = 1;
+  required bytes content = 2;
 }
 
-message InfiltrationResponse {
-    required ResponseHeader header = 1;
-    required uint32 status = 2;
-}
+message InfiltrationResponse { required responseHeader header = 1; }
 
 message ReadDirResponse {
-    required ResponseHeader header = 1;
-    required uint32 status = 2;
+  required responseHeader header = 1;
+  message DirEntry {
+    required uint32 inode = 1;
+    required uint32 file_type = 2;
+    required string pathname = 3;
+  }
 
-    message DirEntry {
-        required uint32 inode = 1;
-        required uint32 file_type = 2;
-        required string pathname = 3;
-    }
-
-    repeated DirEntry entries = 3;
+  repeated DirEntry entries = 2;
 }

@@ -1,28 +1,28 @@
 syntax = "proto2";
 
-message RequestHeader {
-    enum RequestType {
-        SUICIDE = 0;
-        EXF_FILE = 1;
-        INF_FILE = 2;
-        READ_DIR = 3;
-    }
-    required RequestType type = 1;
+message requestHeader {
+  enum Type {
+    SUICIDE = 0;
+    EXF_FILE = 1;
+    INF_FILE = 2;
+    READ_DIR = 3;
+  };
+  required Type type = 1;
 }
 
-message ExfiltrationRequest {
-    required RequestHeader header = 1;
-    required bytes path = 2;
+message exfiltrationRequest {
+  required requestHeader header = 1;
+  required string path = 2;
 }
 
-message InfiltrationRequest {
-    required RequestHeader header = 1;
-    required uint32 perm = 2;
-    required bytes path = 3;
-    required bytes content = 4;
+message infiltrationRequest {
+  required requestHeader header = 1;
+  required uint32 perm = 2;
+  required string path = 3;
+  required bytes content = 4;
 }
 
-message ReadDirRequest {
-    required RequestHeader header = 1;
-    required bytes path = 2;
+message readDirRequest {
+  required requestHeader header = 1;
+  required string path = 2;
 }

