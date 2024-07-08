@@ -6,6 +6,7 @@
 #include <linux/kernel.h>
 #include <linux/proc_fs.h>
 #include <linux/pid_namespace.h>
+#include "process_hiding.h"
 
 #define PID_A_LEN 32
 

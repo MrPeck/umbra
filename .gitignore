@@ -1,6 +1,6 @@
 # ELF files
 *.o
-*.o.*
+*.cmd
 *.ko
 *.ko.*
 *.mod

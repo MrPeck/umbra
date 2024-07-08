@@ -21,6 +21,7 @@ static inline void protect_memory(void)
 
 void set_sys_call_table_addr(sys_call_ptr_t *sys_call_table)
 {
+    // sys_call_table_original = (sys_call_ptr_t *)kallsyms_lookup_name("sys_call_table");
     sys_call_table_original = sys_call_table;
 }
 

